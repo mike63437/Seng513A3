@@ -75,12 +75,27 @@
           if ($message.val().substring(0,5) === "/nick"){
             myName = $message.val().substring(6,$message.val().length);
           }
+          recordMessage();
           $message.val('');
         });
+        $messageForm.keypress(function(e){
+          if (e.which === 13){
+            if ($message.val().substring(0,5) === "/nick"){
+              myName = $message.val().substring(6,$message.val().length);
+            }
+            socket.emit('send message', $message.val());
+            recordMessage();
+            $message.val('');
+          }
+        });
+
+        function recordMessage(){
+          socket.emit('record message', {myName: myName, message: $message.val()});
+        }
 
         socket.on('new message', function(data){
           if (data.user === myName){
-            $chat.append('<li class="list-group-item list-group-item-success">['+data.time+'] <strong>'+data.user+'</strong>: <div class="text-danger"><i>'+data.msg+'</i></div></li>');
+            $chat.append('<li class="list-group-item list-group-item-success">['+data.time+'] <strong>'+data.user+'</strong>: <div class="text-danger"><strong><i>'+data.msg+'</i></strong></div></li>');
           }
           else{
             $chat.append('<li class="list-group-item list-group-item-info">['+data.time+'] <strong>'+data.user+'</strong>: <div>'+data.msg+'</div></li>');
@@ -97,6 +112,14 @@
           });
           $username.val('');
 
+        });
+
+        socket.on('get messages', function(data){
+          var html = '';
+          for (i=0;i<data.length;i++){
+            html += '<li class="list-group-item">'+data[i]+'</li>';
+          }
+          $chat.html(html);
         });
 
         socket.on('get users', function(data){
